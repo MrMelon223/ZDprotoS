@@ -1,6 +1,35 @@
 	// App.cpp
 #include "../include/App.h"
 
+std::vector<glModel> HOST_MODELS;
+std::vector<d_Model> DEVICE_MODELS;
+
+std::queue<KeyboardButtonUse> keyboard_button_uses;
+std::queue<MouseButtonUse> mouse_button_uses;
+
+static void keyboard_callback(GLFWwindow* win, int key, int scancode, int action, int mods) {
+
+	KeyboardButtonUse k{};
+
+	k.key = key;
+	k.scancode = scancode;
+	k.action = action;
+	k.mods = mods;
+
+	keyboard_button_uses.push(k);
+}
+
+static void mouse_callback(GLFWwindow* window, int button, int action, int mods) {
+
+	MouseButtonUse k{};
+
+	k.button = button;
+	k.action = action;
+	k.mods = mods;
+
+	mouse_button_uses.push(k);
+}
+
 void Game::load_models_from_file() {
 	std::ifstream models_in(this->model_list_path);
 	if (!models_in) {
@@ -17,8 +46,19 @@ void Game::load_models_from_file() {
 		printf("Path:Name = %s \t %s\n", path.c_str(), name.c_str());
 
 		HOST_MODELS.push_back(glModel(path, name));
-		DEVICE_MODELS.push_back(HOST_MODELS.back().to_gpu());
+		DEVICE_MODELS.push_back(HOST_MODELS.back().to_gpu(&this->gpu_queue));
 	}
+}
+
+int Runtime::find_model(std::string name) {
+	for (int i = 0; i < HOST_MODELS.size(); i++) {
+		glModel* current = &HOST_MODELS[i];
+
+		if (current->get_name() == name) {
+			return i;
+		}
+	}
+	return -1;
 }
 
 void Game::load_objects_from_file() {
@@ -167,12 +207,33 @@ void Game::mouse_handle(MouseButtonUse& k) {
 }
 
 Game::Game() {
-	this->window = GAME_WINDOW;
+	this->window = new Window(640, 480, false);
 
-	// Initialize Shaders
-	this->load_shaders_from_file();
+	this->cpu_queue = sycl::queue(sycl::cpu_selector_v);
+	this->gpu_queue = sycl::queue(sycl::gpu_selector_v);
+
 
 	this->load_models_from_file();
 
 	this->load_objects_from_file();
+
+	this->camera = new Camera(this->window->dims.x, this->window->dims.y, &this->gpu_queue);
+}
+
+void Game::main_loop() {
+	
+	glfwSetKeyCallback(this->window->get_window_ptr(), keyboard_callback);
+	glfwSetMouseButtonCallback(this->window->get_window_ptr(), mouse_callback);
+	glfwMakeContextCurrent(this->window->get_window_ptr());
+
+	while (this->window->is_running()) {
+		color_t* frame_buff = new color_t[this->window->dims.y * this->window->dims.x];
+
+		glfwPollEvents();
+
+		this->empty_queues();
+
+
+		delete frame_buff;
+	}
 }

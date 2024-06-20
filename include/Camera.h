@@ -17,6 +17,8 @@ public:
 
 	dim_t get_dims() { return this->dims; }
 	ray_t* get_rays_ptr() { return this->rays; }
+
+	void capture(d_ModelInstance*, unsigned int);
 };
 
 #endif

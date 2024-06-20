@@ -40,11 +40,11 @@ void Object::load_from(std::string path) {
 
 	this->name = name;
 
-	this->model_index = find_model(vis_model);
+	this->model_index = Runtime::find_model(vis_model);
 	if (this->model_index < 0) {
 		std::cerr << "Visible Model: " << vis_model << ", not found for glObject: " << path << std::endl;
 	}
-	this->hitbox_model_index = find_model(hit_model);
+	this->hitbox_model_index = Runtime::find_model(hit_model);
 	if (this->hitbox_model_index < 0) {
 		std::cerr << "Hitbox Model: " << hit_model << ", not found for glObject: " << path << std::endl;
 	}

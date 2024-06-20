@@ -14,6 +14,7 @@
     <ClInclude Include="include\App.h" />
     <ClInclude Include="include\Camera.h" />
     <ClInclude Include="include\Helper.h" />
+    <ClInclude Include="include\Light.h" />
     <ClInclude Include="include\Model.h" />
     <ClInclude Include="include\Object.h" />
     <ClInclude Include="include\Primitive.h" />
@@ -25,6 +26,7 @@
     <ClCompile Include="source\main.cpp" />
     <ClCompile Include="source\Model.cpp" />
     <ClCompile Include="source\Object.cpp" />
+    <ClCompile Include="source\Rendering.cpp" />
     <ClCompile Include="source\Window.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

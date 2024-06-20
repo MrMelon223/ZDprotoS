@@ -14,5 +14,5 @@ void Camera::resize(int width, int height) {
 
 	this->dims = dim_t{ width, height };
 
-	this->rays = malloc_device<ray_t>(this->dims.y * this->dims.x, *q);
+	this->rays = malloc_device<ray_t>(this->dims.y * this->dims.x, *this->queue);
 }

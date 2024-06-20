@@ -15,6 +15,8 @@ typedef struct d_Model {
 	tri_t* triangle_indices;
 	vec3_t* triangle_normals;
 	unsigned int* triangle_count;
+
+	unsigned int* material_index;
 };
 
 class glModel {

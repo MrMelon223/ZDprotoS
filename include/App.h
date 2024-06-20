@@ -3,6 +3,8 @@
 
 #include "Window.h"
 #include "Model.h"
+#include "Camera.h"
+#include "Object.h"
 
 static void keyboard_callback(GLFWwindow*, int, int, int, int);
 static void mouse_callback(GLFWwindow*, int, int, int);
@@ -17,12 +19,14 @@ struct MouseButtonUse {
 extern std::queue<KeyboardButtonUse> keyboard_button_uses;
 extern std::queue<MouseButtonUse> mouse_button_uses;
 
-extern Window* GAME_WINDOW;
-
 extern std::vector<glModel> HOST_MODELS;
 extern std::vector<d_Model> DEVICE_MODELS;
 
-int find_model(std::string);
+namespace Runtime {
+
+	int find_model(std::string);
+
+}
 
 void resize_callback(GLFWwindow*, int, int);
 
@@ -34,7 +38,6 @@ private:
 	std::string object_list_path = "resources/objects.txt";
 
 	void load_settings_from_cfg();
-	void load_shaders_from_file();
 	void load_models_from_file();
 	void load_objects_from_file();
 
@@ -49,13 +52,15 @@ private:
 protected:
 	Window* window;
 
+	sycl::queue gpu_queue, cpu_queue;
+
 	//std::vector<glShaderProgram> shader_programs;
 
 	std::vector<Object> objects;
+	std::vector<d_ModelInstance> instances;
 
-	glCamera camera;
+	Camera* camera;
 
-	int find_shader_program(std::string);
 public:
 	Game();
 
