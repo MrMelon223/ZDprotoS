@@ -22,6 +22,8 @@ public:
 
 	bool is_running() { return this->running; }
 	void set_running(bool b) { this->running = b; }
+
+	color_t* get_frame_buffer_ptr() { return this->frame_buffer; }
 };
 
 #endif

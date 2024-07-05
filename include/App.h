@@ -22,13 +22,14 @@ extern std::queue<MouseButtonUse> mouse_button_uses;
 extern std::vector<glModel> HOST_MODELS;
 extern std::vector<d_Model> DEVICE_MODELS;
 
+extern d_Model* d_DEVICE_MODELS;
+
 namespace Runtime {
 
 	int find_model(std::string);
 
 }
 
-void resize_callback(GLFWwindow*, int, int);
 
 class Game {
 private:
@@ -37,7 +38,7 @@ private:
 	std::string model_list_path = "resources/models.txt";
 	std::string object_list_path = "resources/objects.txt";
 
-	void load_settings_from_cfg();
+	//void load_settings_from_cfg();
 	void load_models_from_file();
 	void load_objects_from_file();
 
@@ -49,9 +50,14 @@ private:
 	void input_handle(KeyboardButtonUse&);
 	void mouse_handle(MouseButtonUse&);
 
+	//void resize_callback(GLFWwindow*, int, int);
+
+	void debug_print_device(sycl::device*);
+
 protected:
 	Window* window;
 
+	sycl::device cpu_device, gpu_device;
 	sycl::queue gpu_queue, cpu_queue;
 
 	//std::vector<glShaderProgram> shader_programs;

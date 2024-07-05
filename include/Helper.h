@@ -9,28 +9,50 @@
 #include <sstream>
 #include <queue>
 #include <vector>
-	// GLM Vector Types
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/type_ptr.hpp>
 	// Window API
 #include <GLFW/glfw3.h>
 	// GPU/CPU Compute API
 #include <sycl/sycl.hpp>
 
-typedef glm::vec3 vec3_t;
+typedef struct vec3_t {
+	float x, y, z;
+};
 
-typedef glm::vec2 vec2_t;
+typedef struct vec2_t {
+	float x, y;
+};
 typedef vec2_t uv_t;
 
-typedef glm::vec4 color_t;
+typedef struct color_t {
+	float x, y, z, w;
+};
 
-typedef glm::ivec2 dim_t;
+typedef struct dim_t {
+	int x, y;
+};
 
 typedef struct tri_t {
 	unsigned int a, b, c;
 };
 
 typedef unsigned int uint_t;
+
+const float PI = 3.1415f;
+
+namespace zd {
+
+	extern SYCL_EXTERNAL vec3_t cross(vec3_t&, vec3_t&);
+
+	extern inline SYCL_EXTERNAL float dot(vec3_t a, vec3_t b) {
+		return a.x * b.x + a.y * b.y + a.z * b.z;
+	}
+
+	extern SYCL_EXTERNAL vec3_t add(vec3_t&, vec3_t&);
+	extern SYCL_EXTERNAL vec3_t subtract(vec3_t&, vec3_t&);
+
+	extern SYCL_EXTERNAL vec3_t normalize(vec3_t&);
+
+	extern SYCL_EXTERNAL bool intersects_ray_triangle(vec3_t&, vec3_t&, vec3_t&, vec3_t&, vec3_t&, uv_t&, float&);
+}
 
 #endif

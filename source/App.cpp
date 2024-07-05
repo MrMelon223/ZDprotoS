@@ -4,8 +4,12 @@
 std::vector<glModel> HOST_MODELS;
 std::vector<d_Model> DEVICE_MODELS;
 
+d_Model* d_DEVICE_MODELS;
+
 std::queue<KeyboardButtonUse> keyboard_button_uses;
 std::queue<MouseButtonUse> mouse_button_uses;
+
+
 
 static void keyboard_callback(GLFWwindow* win, int key, int scancode, int action, int mods) {
 
@@ -48,6 +52,12 @@ void Game::load_models_from_file() {
 		HOST_MODELS.push_back(glModel(path, name));
 		DEVICE_MODELS.push_back(HOST_MODELS.back().to_gpu(&this->gpu_queue));
 	}
+
+	d_DEVICE_MODELS = sycl::malloc_device<d_Model>(DEVICE_MODELS.size(), this->gpu_queue);
+
+	this->gpu_queue.memcpy(d_DEVICE_MODELS, DEVICE_MODELS.data(), sizeof(d_Model) * DEVICE_MODELS.size());
+
+	this->gpu_queue.wait();
 }
 
 int Runtime::find_model(std::string name) {
@@ -60,6 +70,10 @@ int Runtime::find_model(std::string name) {
 	}
 	return -1;
 }
+
+/*void Game::resize_callback(GLFWwindow* win, int width, int height) {
+	this->window->resize_viewport(dim_t{ width, height });
+}*/
 
 void Game::load_objects_from_file() {
 	std::ifstream objs_in(object_list_path);
@@ -206,33 +220,48 @@ void Game::mouse_handle(MouseButtonUse& k) {
 	}
 }
 
+void Game::debug_print_device(sycl::device* d) {
+	std::cout << std::setw(12) << "Device: " << d->get_info< sycl::info::device::name>() << std::endl;
+	std::cout << std::setw(10) << "Cores: " << d->get_info<sycl::info::device::max_compute_units>() << std::endl;
+}
+
 Game::Game() {
 	this->window = new Window(640, 480, false);
 
-	this->cpu_queue = sycl::queue(sycl::cpu_selector_v);
-	this->gpu_queue = sycl::queue(sycl::gpu_selector_v);
+	this->cpu_device = sycl::device(sycl::cpu_selector_v);
+	this->gpu_device = sycl::device(sycl::gpu_selector_v);
 
+	this->cpu_queue = sycl::queue(this->cpu_device);
+	this->gpu_queue = sycl::queue(this->gpu_device);
+
+	debug_print_device(&this->cpu_device);
+	debug_print_device(&this->gpu_device);
 
 	this->load_models_from_file();
 
 	this->load_objects_from_file();
 
 	this->camera = new Camera(this->window->dims.x, this->window->dims.y, &this->gpu_queue);
+
+	this->instances.push_back(d_ModelInstance{ 0, vec3_t{0.0f, 0.0f, 0.0f}, vec3_t{0.0f, 0.0f, 0.0f}});
+	glfwMakeContextCurrent(this->window->get_window_ptr());
 }
 
 void Game::main_loop() {
-	
 	glfwSetKeyCallback(this->window->get_window_ptr(), keyboard_callback);
 	glfwSetMouseButtonCallback(this->window->get_window_ptr(), mouse_callback);
-	glfwMakeContextCurrent(this->window->get_window_ptr());
 
 	while (this->window->is_running()) {
 		color_t* frame_buff = new color_t[this->window->dims.y * this->window->dims.x];
 
-		glfwPollEvents();
-
 		this->empty_queues();
 
+		this->camera->capture(this->instances.data(), static_cast<unsigned int>(this->instances.size()));
+
+		this->camera->copy_data_out(this->window);
+
+		glfwSwapBuffers(this->window->get_window_ptr());
+		glfwPollEvents();
 
 		delete frame_buff;
 	}

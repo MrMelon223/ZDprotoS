@@ -31,10 +31,12 @@ void glModel::load_from(std::string path) {
 		in2 >> r >> g >> b >> a;
 		in2 >> u >> v;
 
-		this->vertex_positions.push_back(vec3_t(x, y, z));
-		this->vertex_normals.push_back(glm::normalize(vec3_t(x, y, z)));
-		this->vertex_colors.push_back(color_t(r, g, b, a));
-		this->vertex_uvs.push_back(uv_t(u, v));
+		this->vertex_positions.push_back(vec3_t{ x, y, z });
+		vec3_t position{ x,y,z };
+		position = zd::normalize(position);
+		this->vertex_normals.push_back(position);
+		this->vertex_colors.push_back(color_t{ r, g, b, a });
+		this->vertex_uvs.push_back(uv_t{ u, v });
 	}
 	std::string line;
 	std::getline(in, line);
@@ -55,10 +57,24 @@ void glModel::load_from(std::string path) {
 			vb = this->vertex_positions[y],
 			vc = this->vertex_positions[z];
 
-		glm::vec3 t_norm = glm::cross(va - vb, va - vc),
-			norm_w = (this->vertex_normals[x] + this->vertex_normals[y] + this->vertex_normals[z]) / 3.0f;
-		if (glm::dot(t_norm, norm_w) < 0.0f) {
-			t_norm = -1.0f * t_norm;
+		vec3_t op_a = zd::subtract(va, vb),
+			op_b = zd::subtract(va, vc);
+
+		vec3_t t_norm = zd::cross(op_a, op_b),
+			pos_a = this->vertex_normals[x],
+			pos_b = this->vertex_normals[y],
+			pos_c = this->vertex_normals[z],
+			op_c = zd::add(pos_a, pos_b),
+			norm_w = zd::add(op_c, pos_c);
+
+		norm_w.x = norm_w.x / 3.0f;
+		norm_w.y = norm_w.y / 3.0f;
+		norm_w.z = norm_w.z / 3.0f;
+
+		if (zd::dot(t_norm, norm_w) < 0.0f) {
+			t_norm.x = -1.0f * t_norm.x;
+			t_norm.y = -1.0f * t_norm.y;	// This is gonna be a major floating point rounding headache in the future, goodluck homie
+			t_norm.z = -1.0f * t_norm.z;
 		}
 
 		this->triangle_indices.push_back(tri_t{ x, y, z });

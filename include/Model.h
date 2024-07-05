@@ -34,7 +34,6 @@ protected:
 	std::vector<tri_t> triangle_indices;
 	std::vector<vec3_t> triangle_normals;
 
-	//glShaderProgram shader_program;
 public:
 	glModel(std::string, std::string);
 

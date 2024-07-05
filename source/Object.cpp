@@ -79,6 +79,6 @@ Object::Object(std::string path) {
 	this->filepath = path;
 	this->load_from(this->filepath);
 
-	this->position = vec3_t(0.0f, 0.0f, 0.0f);
-	this->rotation = vec3_t(90.0f, 90.0f, 90.0f);
+	this->position = vec3_t{ 0.0f, 0.0f, 0.0f };
+	this->rotation = vec3_t{ 90.0f, 90.0f, 90.0f };
 }
