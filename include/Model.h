@@ -40,12 +40,19 @@ public:
 	d_Model to_gpu(sycl::queue*);
 
 	std::string get_name() { return this->name; }
+
+	unsigned int get_tri_count() { return static_cast<unsigned int>(this->triangle_indices.size()); }
 };
 
 typedef struct d_ModelInstance {
 	unsigned int model_index;
 	vec3_t position;
 	vec3_t rotation;
+	unsigned int triangle_count;
+	bool show;
+	float scale;
 };
+
+d_ModelInstance create_instance(unsigned int m_idx, vec3_t pos, vec3_t rot, unsigned int t_count, bool show, float scale);
 
 #endif

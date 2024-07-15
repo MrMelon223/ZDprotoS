@@ -2,25 +2,22 @@
 #include "../include/Camera.h"
 #include "../include/App.h"
 
-bool intersects_ray_triangle(vec3_t& r_pos, vec3_t& r_dir, vec3_t& verta, vec3_t& vertb, vec3_t& vertc, uv_t& uv, float& distance) {
-	constexpr float epsilon = std::numeric_limits<float>::epsilon();
+class ray_setup;
+class ray_capture;
 
-	vec3_t edge1, edge2, ray_cross_edge2 = zd::cross(r_dir, edge2);
+SYCL_EXTERNAL bool zd::intersects_ray_triangle(vec3_t& r_pos, vec3_t& r_dir, vec3_t& verta, vec3_t& vertb, vec3_t& vertc, uv_t& uv, float& distance) {
+	constexpr float epsilon = 0.000001f;
 
-	edge1.x = vertb.x - verta.x;
-	edge1.y = vertb.y - verta.y;
-	edge1.z = vertb.z - verta.z;
-
-	edge2.x = vertc.x - verta.x;
-	edge2.y = vertc.y - verta.y;
-	edge2.z = vertc.z - verta.z;
+	vec3_t edge1 = zd::subtract(vertb, verta), 
+		edge2 = zd::subtract(vertc, verta), 
+		ray_cross_edge2 = zd::cross(r_dir, edge2);
 
 	float det = zd::dot(edge1, ray_cross_edge2);
 	if (det > -epsilon && det < epsilon) {
 		return false;	// Ray parallel to tri
 	}
 
-	float inv_det = 1.0 / det;
+	float inv_det = 1.0f / det;
 	vec3_t s;
 
 	s.x = r_pos.x - verta.x;
@@ -74,8 +71,8 @@ void Camera::capture(d_ModelInstance* models, unsigned int model_count) {
 	vec3_t* position = d_cam_position;
 	try {
 		this->queue->submit([&](sycl::handler& h) {
-			h.parallel_for<class ray_setup>(sycl::range<1>(this->dims.y * this->dims.x), [=](sycl::id<1> idx) {
-				int index = idx[0];
+			h.parallel_for<class ray_setup>(sycl::nd_range<1>{this->dims.y* this->dims.x, 1}, [=](sycl::nd_item<1> idx) {
+				int index = idx.get_global_id(0);
 
 				ray_t* ray = &rays[index];
 
@@ -117,8 +114,8 @@ void Camera::capture(d_ModelInstance* models, unsigned int model_count) {
 
 	try {
 		this->queue->submit([&](sycl::handler& h) {
-			h.parallel_for<class ray_capture>(sycl::range<1>(this->dims.y * this->dims.x), [=](sycl::id<1> idx) {
-				int index = idx[0];
+			h.parallel_for<class ray_capture>(sycl::nd_range<1>{this->dims.y * this->dims.x, 1}, [=](sycl::nd_item<1> idx) {
+				int index = idx.get_global_id(0);
 
 				ray_t* ray = &rays[index];
 
@@ -136,9 +133,9 @@ void Camera::capture(d_ModelInstance* models, unsigned int model_count) {
 						uv_t uv;
 						float distance;
 
-						if (intersects_ray_triangle(ray->position, ray->direction, model->vertex_positions[tri->a], model->vertex_positions[tri->b], model->vertex_positions[tri->c], uv, distance)) {
+						if (zd::intersects_ray_triangle(ray->position, ray->direction, model->vertex_positions[tri->a], model->vertex_positions[tri->b], model->vertex_positions[tri->c], uv, distance)) {
 							if (distance < closest) {
-								ray->payload = { color_t{1.0f, 1.0f, 1.0f, 1.0f}, uv, i, j, 0, 0 };
+								ray->payload = payload_t{ color_t{1.0f, 1.0f, 1.0f, 1.0f}, uv, i, j, 0, 0 };
 								ray->has_hit = true;
 							}
 							else {
@@ -147,8 +144,8 @@ void Camera::capture(d_ModelInstance* models, unsigned int model_count) {
 						}
 					}
 				}
-				});
 			});
+		});
 
 		this->queue->wait();
 

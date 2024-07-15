@@ -33,6 +33,8 @@ public:
 	void capture(d_ModelInstance*, unsigned int);
 
 	void copy_data_out(Window*);
+
+	sycl::queue* get_queue_ptr() { return this->queue; }
 };
 
 #endif

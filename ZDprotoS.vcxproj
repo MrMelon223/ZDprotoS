@@ -15,6 +15,7 @@
     <ClInclude Include="include\bvh.h" />
     <ClInclude Include="include\Camera.h" />
     <ClInclude Include="include\Helper.h" />
+    <ClInclude Include="include\Level.h" />
     <ClInclude Include="include\Light.h" />
     <ClInclude Include="include\Model.h" />
     <ClInclude Include="include\Object.h" />
@@ -25,6 +26,7 @@
     <ClCompile Include="source\App.cpp" />
     <ClCompile Include="source\Camera.cpp" />
     <ClCompile Include="source\Helper.cpp" />
+    <ClCompile Include="source\Level.cpp" />
     <ClCompile Include="source\main.cpp" />
     <ClCompile Include="source\Model.cpp" />
     <ClCompile Include="source\Object.cpp" />
@@ -43,6 +45,8 @@
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>Intel(R) oneAPI DPC++ Compiler 2024</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
+    <UseInteloneTBB>false</UseInteloneTBB>
+    <UseInteloneMKL>No</UseInteloneMKL>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
@@ -88,6 +92,7 @@
       <SpecifySyclForceTarget>No</SpecifySyclForceTarget>
       <AdditionalIncludeDirectories>C:\vcpkg-master\installed\x64-windows\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <OpenMPOffloading>None</OpenMPOffloading>
+      <FSYCLUnnamedLambda>Yes</FSYCLUnnamedLambda>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>

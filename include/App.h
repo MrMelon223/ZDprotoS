@@ -5,6 +5,7 @@
 #include "Model.h"
 #include "Camera.h"
 #include "Object.h"
+#include "Level.h"
 
 static void keyboard_callback(GLFWwindow*, int, int, int, int);
 static void mouse_callback(GLFWwindow*, int, int, int);
@@ -25,6 +26,8 @@ extern std::vector<d_Model> DEVICE_MODELS;
 extern d_Model* d_DEVICE_MODELS;
 
 namespace Runtime {
+
+	extern std::vector<Object> objects;
 
 	int find_model(std::string);
 
@@ -54,6 +57,8 @@ private:
 
 	void debug_print_device(sycl::device*);
 
+	Level* current_level;
+
 protected:
 	Window* window;
 
@@ -61,9 +66,6 @@ protected:
 	sycl::queue gpu_queue, cpu_queue;
 
 	//std::vector<glShaderProgram> shader_programs;
-
-	std::vector<Object> objects;
-	std::vector<d_ModelInstance> instances;
 
 	Camera* camera;
 

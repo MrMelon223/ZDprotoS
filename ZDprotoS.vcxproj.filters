@@ -42,6 +42,9 @@
     <ClInclude Include="include\bvh.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="include\Level.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="source\main.cpp">
@@ -66,6 +69,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="source\Helper.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="source\Level.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

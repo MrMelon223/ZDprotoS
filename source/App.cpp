@@ -9,6 +9,8 @@ d_Model* d_DEVICE_MODELS;
 std::queue<KeyboardButtonUse> keyboard_button_uses;
 std::queue<MouseButtonUse> mouse_button_uses;
 
+std::vector<Object> Runtime::objects;
+
 
 
 static void keyboard_callback(GLFWwindow* win, int key, int scancode, int action, int mods) {
@@ -60,6 +62,19 @@ void Game::load_models_from_file() {
 	this->gpu_queue.wait();
 }
 
+void Game::load_objects_from_file() {
+	std::ifstream objects_in(this->object_list_path);
+	if (!objects_in) {
+		std::cerr << "Cannot Find Object List File!" << std::endl;
+		return;
+	}
+
+	std::string line;
+	while (std::getline(objects_in, line)) {
+		Runtime::objects.push_back(Object(line));
+	}
+}
+
 int Runtime::find_model(std::string name) {
 	for (int i = 0; i < HOST_MODELS.size(); i++) {
 		glModel* current = &HOST_MODELS[i];
@@ -75,18 +90,6 @@ int Runtime::find_model(std::string name) {
 	this->window->resize_viewport(dim_t{ width, height });
 }*/
 
-void Game::load_objects_from_file() {
-	std::ifstream objs_in(object_list_path);
-	if (!objs_in) {
-		std::cerr << "Cannot Find Main Objects File!" << std::endl;
-		return;
-	}
-
-	std::string line;
-	while (std::getline(objs_in, line)) {
-		this->objects.push_back(Object(line));
-	}
-}
 
 void Game::empty_queues() {
 	while (!keyboard_button_uses.empty()) {
@@ -238,13 +241,16 @@ Game::Game() {
 	debug_print_device(&this->gpu_device);
 
 	this->load_models_from_file();
-
 	this->load_objects_from_file();
 
 	this->camera = new Camera(this->window->dims.x, this->window->dims.y, &this->gpu_queue);
 
-	this->instances.push_back(d_ModelInstance{ 0, vec3_t{0.0f, 0.0f, 0.0f}, vec3_t{0.0f, 0.0f, 0.0f}});
 	glfwMakeContextCurrent(this->window->get_window_ptr());
+
+	std::string level_path = "resources/levels/test_level.txt";
+
+	this->current_level = new Level(level_path, this->camera);
+
 }
 
 void Game::main_loop() {
@@ -256,7 +262,7 @@ void Game::main_loop() {
 
 		this->empty_queues();
 
-		this->camera->capture(this->instances.data(), static_cast<unsigned int>(this->instances.size()));
+		this->camera->capture(this->current_level->get_d_model_instances(), this->current_level->get_d_model_instance_count());
 
 		this->camera->copy_data_out(this->window);
 

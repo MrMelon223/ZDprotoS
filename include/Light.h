@@ -15,6 +15,7 @@ typedef struct point_light_t {
 	color_t specular_color;
 	float intensity;
 	float falloff;
+	float range;
 };
 
 #endif

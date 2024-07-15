@@ -133,3 +133,7 @@ d_Model glModel::to_gpu(sycl::queue* q) {
 
 	q->wait();
 }
+
+d_ModelInstance create_instance(unsigned int m_idx, vec3_t pos, vec3_t rot, unsigned int t_count, bool show, float scale) {
+	return d_ModelInstance{ m_idx, pos, rot, t_count, show, scale };
+}

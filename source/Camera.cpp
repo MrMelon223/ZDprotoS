@@ -3,6 +3,8 @@
 
 using namespace sycl;
 
+class copy_render_buff_out;
+
 Camera::Camera(int width, int height, sycl::queue* q) {
 	this->queue = q;
 	this->dims = dim_t{ width, height };
@@ -37,7 +39,7 @@ void Camera::copy_data_out(Window* win) {
 
 	try {
 		this->queue->submit([&](sycl::handler& h) {
-			h.parallel_for<class ray_capture>(sycl::range<1>(this->dims.y * this->dims.x), [=](sycl::id<1> idx) {
+			h.parallel_for<class copy_render_buff_out>(sycl::range<1>(this->dims.y * this->dims.x), [=](sycl::id<1> idx) {
 				int index = idx[0];
 
 				ray_t* ray = &r[index];
