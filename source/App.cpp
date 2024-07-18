@@ -117,7 +117,8 @@ void Game::input_handle(KeyboardButtonUse& k) {
 
 		}
 		if (CURRENT_ACTION == GLFW_PRESS || CURRENT_ACTION == GLFW_REPEAT) {
-
+			this->camera->forward(this->last_time);
+			this->camera->debug_print();
 		}
 		break;
 	case GLFW_KEY_S:
@@ -125,7 +126,8 @@ void Game::input_handle(KeyboardButtonUse& k) {
 
 		}
 		if (CURRENT_ACTION == GLFW_PRESS || CURRENT_ACTION == GLFW_REPEAT) {
-
+			this->camera->backward(this->last_time);
+			this->camera->debug_print();
 		}
 		break;
 	case GLFW_KEY_A:
@@ -133,7 +135,8 @@ void Game::input_handle(KeyboardButtonUse& k) {
 
 		}
 		if (CURRENT_ACTION == GLFW_PRESS || CURRENT_ACTION == GLFW_REPEAT) {
-
+			this->camera->left(this->last_time);
+			this->camera->debug_print();
 		}
 		break;
 	case GLFW_KEY_D:
@@ -141,7 +144,8 @@ void Game::input_handle(KeyboardButtonUse& k) {
 
 		}
 		if (CURRENT_ACTION == GLFW_PRESS || CURRENT_ACTION == GLFW_REPEAT) {
-
+			this->camera->right(this->last_time);
+			this->camera->debug_print();
 		}
 		break;
 	case GLFW_KEY_R:
@@ -229,13 +233,14 @@ void Game::debug_print_device(sycl::device* d) {
 }
 
 Game::Game() {
-	this->window = new Window(640, 480, false);
 
 	this->cpu_device = sycl::device(sycl::cpu_selector_v);
-	this->gpu_device = sycl::device(sycl::gpu_selector_v);
+	this->gpu_device = sycl::device(sycl::cpu_selector_v);
 
 	this->cpu_queue = sycl::queue(this->cpu_device);
 	this->gpu_queue = sycl::queue(this->gpu_device);
+
+	this->window = new Window(&this->gpu_queue, 320, 240, false);
 
 	debug_print_device(&this->cpu_device);
 	debug_print_device(&this->gpu_device);
@@ -251,6 +256,7 @@ Game::Game() {
 
 	this->current_level = new Level(level_path, this->camera);
 
+	this->last_time = 0.0f;
 }
 
 void Game::main_loop() {
@@ -258,7 +264,7 @@ void Game::main_loop() {
 	glfwSetMouseButtonCallback(this->window->get_window_ptr(), mouse_callback);
 
 	while (this->window->is_running()) {
-		color_t* frame_buff = new color_t[this->window->dims.y * this->window->dims.x];
+		color_t* frame_buff = new color_t[this->camera->height() * this->camera->width()];
 
 		this->empty_queues();
 
@@ -266,8 +272,21 @@ void Game::main_loop() {
 
 		this->camera->copy_data_out(this->window);
 
+		this->camera->shade(this->current_level->get_d_ambient_light(), this->current_level->get_d_point_lights(), this->current_level->get_d_point_lights_size());
+
+		this->gpu_queue.memcpy(frame_buff, this->window->get_frame_buffer_ptr(), sizeof(color_t) * this->camera->height() * this->camera->width());
+
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		glDrawPixels(this->camera->width(), this->camera->height(), GL_BGRA_EXT, GL_FLOAT, frame_buff);
 		glfwSwapBuffers(this->window->get_window_ptr());
 		glfwPollEvents();
+
+		double x, y;
+		glfwGetCursorPos(this->window->get_window_ptr(), &x, &y);
+		glfwSetCursorPos(this->window->get_window_ptr(), 0.5 * static_cast<double>(this->camera->width()), 0.5 * static_cast<double>(this->camera->height()));
+		this->camera->update_direction(static_cast<float>(x), static_cast<float>(y));
+
+		this->last_time = glfwGetTime() - this->last_time;
 
 		delete frame_buff;
 	}

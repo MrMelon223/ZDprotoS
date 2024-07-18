@@ -69,6 +69,8 @@ protected:
 
 	Camera* camera;
 
+	float last_time;
+
 public:
 	Game();
 

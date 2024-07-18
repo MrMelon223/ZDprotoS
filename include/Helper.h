@@ -1,6 +1,8 @@
 #ifndef HELPER_H
 #define HELPER_H
 
+#pragma comment(lib, "opengl32.lib")
+
 // Standard Libraries
 #include <iostream>
 #include <iomanip>
@@ -9,27 +11,30 @@
 #include <sstream>
 #include <queue>
 #include <vector>
+#include <immintrin.h>
 	// Window API
 #include <GLFW/glfw3.h>
+#include <glm/glm.hpp>
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/gtx/intersect.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 	// GPU/CPU Compute API
 #include <sycl/sycl.hpp>
+#include <ipp.h>
+#include "oneapi/mkl.hpp"
 
-typedef struct vec3_t {
-	float x, y, z;
-};
+typedef glm::vec3 vec3_t;
 
-typedef struct vec2_t {
-	float x, y;
-};
+typedef glm::vec2 vec2_t;
 typedef vec2_t uv_t;
 
-typedef struct color_t {
-	float x, y, z, w;
-};
+typedef glm::vec4 color_t;
 
-typedef struct dim_t {
-	int x, y;
-};
+typedef glm::mat3 mat3_t;
+
+typedef glm::mat4 mat4_t;
+
+typedef glm::ivec2 dim_t;
 
 typedef struct tri_t {
 	unsigned int a, b, c;
@@ -47,12 +52,11 @@ namespace zd {
 		return a.x * b.x + a.y * b.y + a.z * b.z;
 	}
 
-	extern SYCL_EXTERNAL vec3_t add(vec3_t&, vec3_t&);
-	extern SYCL_EXTERNAL vec3_t subtract(vec3_t&, vec3_t&);
 
 	extern SYCL_EXTERNAL vec3_t normalize(vec3_t&);
 
-	extern SYCL_EXTERNAL bool intersects_ray_triangle(vec3_t&, vec3_t&, vec3_t&, vec3_t&, vec3_t&, uv_t&, float&);
+	extern SYCL_EXTERNAL vec3_t scale(vec3_t, float);
+
 }
 
 #endif

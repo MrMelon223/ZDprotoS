@@ -4,6 +4,7 @@
 #include "Helper.h"
 
 typedef struct payload_t {
+	float distance;
 	color_t interpolated_color;
 	uv_t barycentric_coordinate;
 
@@ -12,6 +13,8 @@ typedef struct payload_t {
 
 	uint_t hitbox_model_index;
 	uint_t hitbox_model_triangle_index;
+
+	vec3_t triangle_normal;
 };
 
 typedef struct ray_t{

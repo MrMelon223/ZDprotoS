@@ -141,7 +141,7 @@ void Level::load_from(std::string path) {
 		this->loaded_objects.back().set_position(vec3_t{ x2, y2, z2 });
 		this->loaded_objects.back().set_rotation(vec3_t{ x_d, y_d, z_d });
 
-		this->add_model_instance(create_instance(this->loaded_objects.back().get_model_index(), this->loaded_objects.back().get_position(), this->loaded_objects.back().get_rotation(), HOST_MODELS[this->loaded_objects.back().get_model_index()].get_tri_count(), false, scale));
+		this->add_model_instance(create_instance(this->loaded_objects.back().get_model_index(), vec3_t{ x2, y2, z2 }, vec3_t{ x_d, y_d, z_d }, HOST_MODELS[this->loaded_objects.back().get_model_index()].get_tri_count(), true, scale));
 		this->loaded_objects.back().set_model_index(static_cast<uint32_t>(this->instances.size() - 1));
 		this->loaded_objects.back().set_spawn_point(vec3_t{ x2, y2, z2 });
 

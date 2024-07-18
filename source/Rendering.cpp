@@ -5,48 +5,6 @@
 class ray_setup;
 class ray_capture;
 
-SYCL_EXTERNAL bool zd::intersects_ray_triangle(vec3_t& r_pos, vec3_t& r_dir, vec3_t& verta, vec3_t& vertb, vec3_t& vertc, uv_t& uv, float& distance) {
-	constexpr float epsilon = 0.000001f;
-
-	vec3_t edge1 = zd::subtract(vertb, verta), 
-		edge2 = zd::subtract(vertc, verta), 
-		ray_cross_edge2 = zd::cross(r_dir, edge2);
-
-	float det = zd::dot(edge1, ray_cross_edge2);
-	if (det > -epsilon && det < epsilon) {
-		return false;	// Ray parallel to tri
-	}
-
-	float inv_det = 1.0f / det;
-	vec3_t s;
-
-	s.x = r_pos.x - verta.x;
-	s.y = r_pos.y - verta.y;
-	s.z = r_pos.z - verta.z;
-
-	float u = inv_det * zd::dot(s, ray_cross_edge2);
-
-	if (u < 0.0f || u > 1.0f) {
-		return false;
-	}
-
-	vec3_t s_cross_edge1 = zd::cross(s, edge1);
-	float v = inv_det * zd::dot(r_pos, s_cross_edge1);
-	if (v < 0.0f || v > 1.0f) {
-		return false;
-	}
-
-	float t = inv_det * zd::dot(edge2, s_cross_edge1);
-	if (t > epsilon) {
-		uv = uv_t{ u,v };
-		distance = t;
-		return true;
-	}
-	else {
-		return false;
-	}
-}
-
 void Camera::capture(d_ModelInstance* models, unsigned int model_count) {
 
 	d_Model* d_DEV_MODELS = d_DEVICE_MODELS;
@@ -65,13 +23,13 @@ void Camera::capture(d_ModelInstance* models, unsigned int model_count) {
 	}
 
 	ray_t* rays = this->rays;
-	dim_t* dims = d_dims;
-	float* hori_fov = d_hori_fov;
-	vec3_t* direction = d_cam_direction;
-	vec3_t* position = d_cam_position;
+	dim_t* dims = this->d_dims;
+	float* hori_fov = this->d_hori_fov;
+	vec3_t* direction = this->d_cam_direction;
+	vec3_t* position = this->d_cam_position;
 	try {
 		this->queue->submit([&](sycl::handler& h) {
-			h.parallel_for<class ray_setup>(sycl::nd_range<1>{this->dims.y* this->dims.x, 1}, [=](sycl::nd_item<1> idx) {
+			h.parallel_for<class ray_setup>(sycl::nd_range<1>{this->dims.y * this->dims.x, 1}, [=](sycl::nd_item<1> idx) {
 				int index = idx.get_global_id(0);
 
 				ray_t* ray = &rays[index];
@@ -90,10 +48,15 @@ void Camera::capture(d_ModelInstance* models, unsigned int model_count) {
 				vec3_t right = zd::cross(*direction, upward);
 
 				vec3_t up = zd::cross(right, *direction);
+				up = zd::normalize(up);
+				*direction = zd::normalize(*direction);
+				right = zd::normalize(right);
 
 				ray->direction.x = direction->x + norm_x * half_fov * ratio * right.x + norm_y * half_fov * up.x;
 				ray->direction.y = direction->y + norm_x * half_fov * ratio * right.y + norm_y * half_fov * up.y;
 				ray->direction.z = direction->z + norm_x * half_fov * ratio * right.z + norm_y * half_fov * up.z;
+
+				ray->position = *position;
 			});
 		});
 
@@ -121,28 +84,61 @@ void Camera::capture(d_ModelInstance* models, unsigned int model_count) {
 
 				int x = index % dims->x,
 					y = (index - x) / dims->x;
-				float closest = 100.0f;
+				float closest = 1000.0f;
 				tri_t* intersected;
+				bool tried = false, intersect = false;
 
 				for (unsigned int i = 0; i < *d_mod_count; i++) {
 					d_Model* model = &d_DEV_MODELS[d_models[i].model_index];
+					if (d_models[i].show) {
+						vec3_t rot = d_models[i].rotation;
 
-					for (unsigned int j = 0; j < *model->triangle_count; j++) {
+						mat4_t rot_x = glm::rotate(glm::mat4(1.0f), rot.x, glm::vec3(1.0f, 0.0f, 0.0f)),
+							rot_y = glm::rotate(glm::mat4(1.0f), rot.y, glm::vec3(0.0f, 1.0f, 0.0f)),
+							rot_z = glm::rotate(glm::mat4(1.0f), rot.z, glm::vec3(0.0f, 0.0f, 1.0f)),
+							rotate = rot_x * rot_y;
 
-						tri_t* tri = &model->triangle_indices[j];
-						uv_t uv;
-						float distance;
+						for (unsigned int j = 0; j < *model->triangle_count; j++) {
 
-						if (zd::intersects_ray_triangle(ray->position, ray->direction, model->vertex_positions[tri->a], model->vertex_positions[tri->b], model->vertex_positions[tri->c], uv, distance)) {
-							if (distance < closest) {
-								ray->payload = payload_t{ color_t{1.0f, 1.0f, 1.0f, 1.0f}, uv, i, j, 0, 0 };
-								ray->has_hit = true;
+							tri_t* tri = &model->triangle_indices[j];
+							vec3_t tri_norm = model->triangle_normals[j];
+							uv_t uv;
+							float distance;
+							float scale = d_models[i].scale;
+
+							vec3_t offset = d_models[i].position;
+
+							vec3_t verta = model->vertex_positions[tri->a];
+							vec3_t vertb = model->vertex_positions[tri->b];
+							vec3_t vertc = model->vertex_positions[tri->c];
+
+							verta = ((rotate * glm::vec4(verta, 0.0f)) + glm::vec4(offset, 0.0f))* scale;
+
+							vertb = ((rotate * glm::vec4(vertb, 0.0f)) + glm::vec4(offset, 0.0f)) * scale;
+
+							vertc = ((rotate * glm::vec4(vertc, 0.0f)) + glm::vec4(offset, 0.0f)) * scale;
+
+							// HERE !!!!
+
+							bool test = glm::intersectRayTriangle(ray->position, ray->direction, verta, vertb, vertc, uv, distance);
+
+							if (test) {
+								if (distance < closest) {
+									ray->payload = payload_t{ distance, color_t{1.0f, 1.0f, 1.0f, 1.0f}, uv, i, j, 0, 0, tri_norm };
+									intersect = true;
+								}
+								else {
+								}
 							}
-							else {
-								ray->has_hit = false;
-							}
+							tried = true;
 						}
 					}
+				}
+				if (tried && intersect) {
+					ray->has_hit = true;
+				}
+				else {
+					ray->has_hit = false;
 				}
 			});
 		});
@@ -153,5 +149,6 @@ void Camera::capture(d_ModelInstance* models, unsigned int model_count) {
 	catch (sycl::exception& e) {
 		std::cerr << "RAY_CAPTURE::ERROR: " << e.what() << std::endl;
 	}
+	sycl::free(d_models, *this->queue);
 	sycl::free(d_mod_count, *this->queue);
 }

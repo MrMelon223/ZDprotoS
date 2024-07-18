@@ -57,27 +57,27 @@ void glModel::load_from(std::string path) {
 			vb = this->vertex_positions[y],
 			vc = this->vertex_positions[z];
 
-		vec3_t op_a = zd::subtract(va, vb),
-			op_b = zd::subtract(va, vc);
+		vec3_t op_a = vb - va,
+			op_b = vb - vc;
 
-		vec3_t t_norm = zd::cross(op_a, op_b),
+		vec3_t t_norm = glm::cross(op_a, op_b),
 			pos_a = this->vertex_normals[x],
 			pos_b = this->vertex_normals[y],
 			pos_c = this->vertex_normals[z],
-			op_c = zd::add(pos_a, pos_b),
-			norm_w = zd::add(op_c, pos_c);
+			op_c = pos_a + pos_b,
+			norm_w = op_c + pos_c;
 
 		norm_w.x = norm_w.x / 3.0f;
 		norm_w.y = norm_w.y / 3.0f;
 		norm_w.z = norm_w.z / 3.0f;
 
 		if (zd::dot(t_norm, norm_w) < 0.0f) {
-			t_norm.x = -1.0f * t_norm.x;
-			t_norm.y = -1.0f * t_norm.y;	// This is gonna be a major floating point rounding headache in the future, goodluck homie
-			t_norm.z = -1.0f * t_norm.z;
+			t_norm.x = -t_norm.x;
+			t_norm.y = -t_norm.y;	// This is gonna be a major floating point rounding headache in the future, goodluck homie
+			t_norm.z = -t_norm.z;
 		}
 
-		this->triangle_indices.push_back(tri_t{ x, y, z });
+		this->triangle_indices.push_back(tri_t{ x, y, z});
 		this->triangle_normals.push_back(t_norm);
 	}
 
@@ -132,8 +132,10 @@ d_Model glModel::to_gpu(sycl::queue* q) {
 	q->memcpy(ret.triangle_count, &t_count, sizeof(unsigned int));
 
 	q->wait();
+
+	return ret;
 }
 
-d_ModelInstance create_instance(unsigned int m_idx, vec3_t pos, vec3_t rot, unsigned int t_count, bool show, float scale) {
+/*d_ModelInstance create_instance(unsigned int m_idx, vec3_t pos, vec3_t rot, unsigned int t_count, bool show, float scale) {
 	return d_ModelInstance{ m_idx, pos, rot, t_count, show, scale };
-}
+}*/

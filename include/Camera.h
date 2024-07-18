@@ -4,6 +4,7 @@
 #include "Primitive.h"
 #include "Model.h"
 #include "Window.h"
+#include "Light.h"
 
 class Camera {
 protected:
@@ -22,8 +23,12 @@ protected:
 	dim_t* d_dims;
 	float* d_hori_fov;
 
+	color_t* render_buffer;
+
 public:
 	Camera(int, int, sycl::queue*);
+
+	void update_direction(float, float);
 
 	void resize(int, int);
 
@@ -32,9 +37,21 @@ public:
 
 	void capture(d_ModelInstance*, unsigned int);
 
+	void shade(ambient_light_t*, point_light_t*, unsigned int);
+
 	void copy_data_out(Window*);
 
 	sycl::queue* get_queue_ptr() { return this->queue; }
+
+	int height() { return this->dims.y; }
+	int width() { return this->dims.x; }
+
+	void forward(float);
+	void backward(float);
+	void right(float);
+	void left(float);
+
+	void debug_print();
 };
 
 #endif

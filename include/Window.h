@@ -6,6 +6,7 @@
 class Window {
 private:
 protected:
+	sycl::queue* queue;
 	bool running;
 	GLFWwindow* window;
 
@@ -14,7 +15,7 @@ public:
 	dim_t dims;
 	bool is_fullscreen;
 
-	Window(int, int, bool);
+	Window(sycl::queue*, int, int, bool);
 
 	GLFWwindow* get_window_ptr() { return this->window; }
 

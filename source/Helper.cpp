@@ -11,26 +11,6 @@ vec3_t zd::cross(vec3_t& a, vec3_t& b) {
 	return r;
 }
 
-vec3_t zd::subtract(vec3_t& a, vec3_t& b) {
-	vec3_t r{};
-
-	r.x = a.x - b.x;
-	r.y = a.y - b.y;
-	r.z = a.z - b.z;
-
-	return r;
-}
-
-vec3_t zd::add(vec3_t& a, vec3_t& b) {
-	vec3_t r{};
-
-	r.x = a.x + b.x;
-	r.y = a.y + b.y;
-	r.z = a.z + b.z;
-
-	return r;
-}
-
 vec3_t zd::normalize(vec3_t& v) {
 	float mag = sqrtf(v.x * v.x + v.y * v.y + v.z * v.z);
 	vec3_t r{};
@@ -45,3 +25,12 @@ vec3_t zd::normalize(vec3_t& v) {
 
 	return r;
 }
+
+vec3_t zd::scale(vec3_t v, float s) {
+	v.x *= s;
+	v.y *= s;
+	v.z *= s;
+
+	return v;
+}
+

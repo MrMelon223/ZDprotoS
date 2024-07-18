@@ -47,6 +47,7 @@
     <CharacterSet>Unicode</CharacterSet>
     <UseInteloneTBB>false</UseInteloneTBB>
     <UseInteloneMKL>No</UseInteloneMKL>
+    <UseIntelIPP1A>true</UseIntelIPP1A>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
@@ -69,7 +70,7 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>$(Path);$(IncludePath)</IncludePath>
+    <IncludePath>C:\Program Files (x86)\Intel\oneAPI\mkl\2024.2\include;$(Path);$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
