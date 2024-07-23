@@ -90,13 +90,15 @@ void Camera::capture(d_ModelInstance* models, unsigned int model_count) {
 
 				for (unsigned int i = 0; i < *d_mod_count; i++) {
 					d_Model* model = &d_DEV_MODELS[d_models[i].model_index];
+					int towards = 0;
+					BVHNode* base = &model->d_bvh->nodes[model->d_bvh->initial];
 					if (d_models[i].show) {
 						vec3_t rot = d_models[i].rotation;
 
-						mat4_t rot_x = glm::rotate(glm::mat4(1.0f), rot.x, glm::vec3(1.0f, 0.0f, 0.0f)),
-							rot_y = glm::rotate(glm::mat4(1.0f), rot.y, glm::vec3(0.0f, 1.0f, 0.0f)),
-							rot_z = glm::rotate(glm::mat4(1.0f), rot.z, glm::vec3(0.0f, 0.0f, 1.0f)),
-							rotate = rot_x * rot_y;
+						mat3_t rot_x = zd::rotate(glm::mat3(1.0f), rot.x, vec3_t(1.0f, 0.0f, 0.0f)),
+							rot_y = zd::rotate(glm::mat3(1.0f), rot.y, vec3_t(0.0f, 1.0f, 0.0f)),
+							rot_z = zd::rotate(glm::mat3(1.0f), rot.z, vec3_t(0.0f, 0.0f, 1.0f)),
+							rotate = rot_x * rot_y * rot_z;
 
 						for (unsigned int j = 0; j < *model->triangle_count; j++) {
 
@@ -112,19 +114,23 @@ void Camera::capture(d_ModelInstance* models, unsigned int model_count) {
 							vec3_t vertb = model->vertex_positions[tri->b];
 							vec3_t vertc = model->vertex_positions[tri->c];
 
-							verta = ((rotate * glm::vec4(verta, 0.0f)) + glm::vec4(offset, 0.0f))* scale;
+							vec3_t va = ((verta * rotate) + offset) * scale;
 
-							vertb = ((rotate * glm::vec4(vertb, 0.0f)) + glm::vec4(offset, 0.0f)) * scale;
+							vec3_t vb = ((vertb * rotate) + offset) * scale;
 
-							vertc = ((rotate * glm::vec4(vertc, 0.0f)) + glm::vec4(offset, 0.0f)) * scale;
+							vec3_t vc = ((vertc * rotate) + offset) * scale;
+
+							verta = vec3_t(va.x, va.y, va.z);
+							vertb = vec3_t(vb.x, vb.y, vb.z);
+							vertc = vec3_t(vc.x, vc.y, vc.z);
 
 							// HERE !!!!
 
-							bool test = glm::intersectRayTriangle(ray->position, ray->direction, verta, vertb, vertc, uv, distance);
+							bool test = zd::intersects_triangle(ray->position, ray->direction, verta, vertb, vertc, uv, distance);
 
 							if (test) {
 								if (distance < closest) {
-									ray->payload = payload_t{ distance, color_t{1.0f, 1.0f, 1.0f, 1.0f}, uv, i, j, 0, 0, tri_norm };
+									ray->payload = { distance, color_t{1.0f, 1.0f, 1.0f, 1.0f}, uv, i, j, 0, 0, tri_norm };
 									intersect = true;
 								}
 								else {

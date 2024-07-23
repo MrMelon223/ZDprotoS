@@ -235,12 +235,12 @@ void Game::debug_print_device(sycl::device* d) {
 Game::Game() {
 
 	this->cpu_device = sycl::device(sycl::cpu_selector_v);
-	this->gpu_device = sycl::device(sycl::cpu_selector_v);
+	this->gpu_device = sycl::device(sycl::gpu_selector_v);
 
 	this->cpu_queue = sycl::queue(this->cpu_device);
 	this->gpu_queue = sycl::queue(this->gpu_device);
 
-	this->window = new Window(&this->gpu_queue, 320, 240, false);
+	this->window = new Window(&this->gpu_queue, 160, 120, false);
 
 	debug_print_device(&this->cpu_device);
 	debug_print_device(&this->gpu_device);
